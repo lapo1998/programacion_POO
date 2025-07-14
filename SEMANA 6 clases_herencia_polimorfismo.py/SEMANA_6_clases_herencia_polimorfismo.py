@@ -1,196 +1,212 @@
-import time
-import random
+# sistema básico de gestión universitaria.
+#  este codigo mostramos o tratamos de informar:
+# Definir qué es una Persona, un Estudiante, un Profesor y una Materia.
+# Mostrar cómo los estudiantes y profesores heredan características de una Persona.
+# Demostrar cómo diferentes tipos de usuarios (estudiantes, profesores) pueden mostrar
+# su información de manera única, aunque se les pida hacerlo con el mismo comando.
 
-class Sensor:
-    """
-    Clase que representa un sensor de datos, demostrando el uso de constructores y destructores.
-    El constructor inicializa el sensor y el destructor simula su desactivación/liberación de recursos.
-    """
+# --- Clases: Planos para objetos ---
 
-    def __init__(self, id_sensor, tipo, unidad, valor_inicial=0.0):
-        """
-        Constructor de la clase Sensor.
-        Este método se llama automáticamente cuando se crea una nueva instancia de Sensor.
-        Su propósito es inicializar los atributos del objeto y ponerlo en un estado válido.
+class Persona:
+    # Base para individuos.
+    def __init__(self, nombre, apellido, cedula):
+        self._nombre = nombre  # Atributo protegido.
+        self._apellido = apellido
+        self._cedula = cedula
 
-        Args:
-            id_sensor (int o str): Un identificador único para el sensor.
-            tipo (str): El tipo de sensor (ej. "Temperatura", "Humedad").
-            unidad (str): La unidad de medida del sensor (ej. "°C", "% HR").
-            valor_inicial (float, opcional): El valor inicial del sensor. Por defecto es 0.0.
+    # Obtiene nombre completo.
+    def obtener_nombre_completo(self):
+        return f"{self._nombre} {self._apellido}"
 
-        Raises:
-            ValueError: Si alguno de los parámetros de entrada es inválido.
-        """
-        # --- Inicialización y Validación de Atributos ---
-        # Es CRÍTICO inicializar todos los atributos que se usarán en __del__
-        # ANTES de cualquier lógica que pueda fallar o lanzar una excepción.
-        self.id_sensor = None # Inicializar a None o un valor seguro
-        self.tipo = None
-        self.unidad = None
-        self.valor_actual = 0.0
-        self.activo = False # Inicializar a False por seguridad
+    # Info general. Será especializado (polimorfismo).
+    def mostrar_datos(self):
+        return f"Cédula: {self._cedula}, Nombre: {self.obtener_nombre_completo()}"
 
-        try:
-            # Validar el ID del sensor
-            if not isinstance(id_sensor, (int, str)) or not id_sensor:
-                raise ValueError("El ID del sensor debe ser un número o una cadena no vacía.")
-            self.id_sensor = id_sensor
 
-            # Validar el tipo de sensor
-            if not isinstance(tipo, str) or not tipo.strip():
-                raise ValueError("El tipo de sensor no puede estar vacío.")
-            self.tipo = tipo.strip()
+class Materia:
+    # Clase de asignatura.
+    def __init__(self, nombre, codigo, creditos):
+        self._nombre = nombre
+        self._codigo = codigo
+        self._creditos = creditos
+        self._docente_asignado = None # Asignado por método (encapsulación).
 
-            # Validar la unidad de medida
-            if not isinstance(unidad, str) or not unidad.strip():
-                raise ValueError("La unidad de medida no puede estar vacía.")
-            self.unidad = unidad.strip()
+    # Nombre de materia.
+    def obtener_nombre(self):
+        return self._nombre
 
-            # Validar el valor inicial
-            if not isinstance(valor_inicial, (int, float)):
-                raise ValueError("El valor inicial debe ser un número.")
-            self.valor_actual = float(valor_inicial)
+    # Código de materia.
+    def obtener_codigo(self):
+        return self._codigo
 
-            self.activo = True # Si todo va bien, el sensor se activa
+    # Créditos de materia.
+    def obtener_creditos(self):
+        return self._creditos
 
-            # Mensaje del constructor para demostrar su activación
-            print(f"\n[CONSTRUCTOR] Sensor '{self.id_sensor}' ({self.tipo} en {self.unidad}) inicializado. Valor inicial: {self.valor_actual:.2f}{self.unidad}")
-
-        except ValueError as e:
-            # Si hay un error en la inicialización, es mejor dejar 'activo' en False
-            # y tal vez loggear el error o relanzarlo después de un mensaje claro.
-            print(f"\n[CONSTRUCTOR ERROR] No se pudo inicializar el sensor: {e}")
-            self.activo = False # Asegurarse de que el sensor no se marque como activo si falla
-            self.id_sensor = id_sensor # Mantener el ID para el destructor si es posible, si no, se queda en None
-            # No relanzar la excepción aquí si se quiere que el programa continúe,
-            # pero el objeto quedará en un estado no completamente inicializado.
-            # En la demostración principal, se captura el ValueError.
-
-    def leer_valor(self):
-        """
-        Simula la lectura del valor actual del sensor.
-        Solo permite la lectura si el sensor está activo.
-        """
-        if self.activo:
-            # Simulación de una lectura real: pequeño retraso y variación aleatoria
-            time.sleep(0.05)
-            delta = (random.random() - 0.5) * 0.5
-            self.valor_actual = round(self.valor_actual + delta, 2)
-            print(f"[*] Sensor '{self.id_sensor}' ({self.tipo}): Leyendo valor -> {self.valor_actual:.2f}{self.unidad}")
-            return self.valor_actual
+    # Asigna docente (encapsulación).
+    def asignar_docente(self, docente):
+        if isinstance(docente, Profesor):
+            self._docente_asignado = docente
         else:
-            print(f"[!] Sensor '{self.id_sensor}' está inactivo. No se puede leer el valor.")
-            return None
+            print("ERROR: Solo objeto Profesor válido.")
 
-    def actualizar_valor(self, nuevo_valor):
-        """
-        Actualiza el valor del sensor a un nuevo valor específico de forma manual.
-        Solo permite la actualización si el sensor está activo.
-        """
-        if self.activo:
-            if not isinstance(nuevo_valor, (int, float)):
-                print(f"[!] Valor inválido para actualizar el sensor '{self.id_sensor}'.")
-                return
-            self.valor_actual = float(nuevo_valor)
-            print(f"[*] Sensor '{self.id_sensor}' ({self.tipo}): Valor actualizado manualmente a {self.valor_actual:.2f}{self.unidad}")
+    # Representación en texto.
+    def __str__(self):
+        return f"{self._nombre} ({self._codigo})"
+
+
+class Estudiante(Persona):
+    # Estudiante (hereda de Persona).
+    def __init__(self, nombre, apellido, cedula, carrera):
+        super().__init__(nombre, apellido, cedula) # Herencia.
+        self._carrera = carrera
+        self._materias_matriculadas = [] # Materias inscritas (encapsulación).
+        self._calificaciones_por_materia = {} # Calificaciones (encapsulación).
+        self._promedio_general = 0.0 # Calculado internamente (encapsulación).
+
+    # Obtiene carrera.
+    def obtener_carrera(self):
+        return self._carrera
+
+    # Obtiene promedio.
+    def obtener_promedio_general(self):
+        return self._promedio_general
+
+    # Matricula materia (encapsulación).
+    def matricular_materia(self, materia):
+        if not isinstance(materia, Materia):
+            print("ERROR: Solo se pueden matricular objetos de tipo Materia.")
+            return
+
+        if materia not in self._materias_matriculadas:
+            self._materias_matriculadas.append(materia)
+            self._calificaciones_por_materia[materia.obtener_codigo()] = []
+            print(f"INFO: {self.obtener_nombre_completo()} matriculado en {materia.obtener_nombre()}.")
         else:
-            print(f"[!] Sensor '{self.id_sensor}' está inactivo. No se puede actualizar el valor.")
+            print(f"INFO: {self.obtener_nombre_completo()} ya está matriculado en {materia.obtener_nombre()}.")
 
-    def desactivar(self):
-        """
-        Método público para desactivar el sensor manualmente (simulando un apagado).
-        Esto es diferente de la llamada automática al destructor.
-        """
-        if self.activo:
-            self.activo = False
-            print(f"[ACCIÓN MANUAL] Sensor '{self.id_sensor}' ({self.tipo}) ha sido DESACTIVADO manualmente.")
+    # Registra calificación (encapsulación y actualización).
+    def registrar_calificacion(self, codigo_materia, calificacion):
+        if 0 <= calificacion <= 100:
+            if codigo_materia in self._calificaciones_por_materia:
+                self._calificaciones_por_materia[codigo_materia].append(calificacion)
+                self._calcular_promedio_general() # Recalcula el promedio.
+                print(f"INFO: Calificación {calificacion} registrada en {codigo_materia}.")
+            else:
+                print(f"ERROR: Estudiante no matriculado en {codigo_materia}.")
         else:
-            print(f"[ACCIÓN MANUAL] Sensor '{self.id_sensor}' ({self.tipo}) ya está inactivo.")
+            print("ERROR: Calificación fuera de rango (0-100).")
 
-    def __del__(self):
-        """
-        Destructor de la clase Sensor.
-        Este método se invoca cuando no quedan referencias al objeto Sensor y el recolector de basura
-        de Python está a punto de eliminarlo de la memoria. Su propósito es realizar cualquier
-        "limpieza" o liberación de recursos asociados al objeto.
+    # Polimorfismo: Personaliza 'mostrar_datos'.
+    def mostrar_datos(self):
+        datos_base = super().mostrar_datos()
+        materias_nombres = [m.obtener_nombre() for m in self._materias_matriculadas]
+        materias_str = ", ".join(materias_nombres) if materias_nombres else "Ninguna"
+        return (f"{datos_base}, Tipo: Estudiante, Carrera: {self._carrera}, "
+                f"Materias: [{materias_str}], Promedio: {self.obtener_promedio_general():.2f}")
 
-        En este caso, simula la desconexión o desactivación final del sensor.
-        Se usa hasattr() para verificar la existencia de atributos antes de acceder a ellos,
-        previniendo AttributeErrors durante la fase de cierre del programa.
-        """
-        # Es crucial usar hasattr() en __del__ porque los atributos pueden ya no existir
-        # si el objeto se está destruyendo durante el cierre del intérprete o si __init__ falló.
-        if hasattr(self, 'activo') and self.activo:
-            self.activo = False
-            # Intentar acceder a otros atributos como self.id_sensor o self.tipo también
-            # debería ser protegido con hasattr() si hay riesgo de que no existan.
-            # Sin embargo, id_sensor y tipo se inicializan a None al principio del constructor,
-            # lo que ayuda a mitigar ese riesgo.
-            sensor_id_msg = getattr(self, 'id_sensor', 'ID desconocido')
-            sensor_tipo_msg = getattr(self, 'tipo', 'Tipo desconocido')
-            print(f"[DESTRUCTOR] Sensor '{sensor_id_msg}' ({sensor_tipo_msg}) ha sido DESACTIVADO y sus recursos liberados.")
-        elif hasattr(self, 'id_sensor'): # Si no estaba activo pero tiene ID, dar un mensaje alternativo
-            sensor_id_msg = getattr(self, 'id_sensor', 'ID desconocido')
-            sensor_tipo_msg = getattr(self, 'tipo', 'Tipo desconocido')
-            print(f"[DESTRUCTOR] Sensor '{sensor_id_msg}' ({sensor_tipo_msg}) ya estaba inactivo o no pudo ser inicializado.")
-        else: # Si ni siquiera tiene ID (muy raro, indica fallo grave en init)
-            print("[DESTRUCTOR] Un objeto Sensor incompleto ha sido destruido.")
+    # Método interno: Calcula promedio (encapsulación).
+    def _calcular_promedio_general(self):
+        total_puntos = 0
+        total_creditos = 0
+        for materia in self._materias_matriculadas:
+            codigo = materia.obtener_codigo()
+            creditos = materia.obtener_creditos()
+            notas = self._calificaciones_por_materia.get(codigo, [])
+            if notas:
+                promedio_materia = sum(notas) / len(notas)
+                total_puntos += promedio_materia * creditos
+                total_creditos += creditos
 
-# --- Bloque Principal de Demostración ---
+        if total_creditos > 0:
+            self._promedio_general = total_puntos / total_creditos
+        else:
+            self._promedio_general = 0.0
+
+
+class Profesor(Persona):
+    # Profesor (hereda de Persona).
+    def __init__(self, nombre, apellido, cedula, departamento):
+        super().__init__(nombre, apellido, cedula) # Herencia.
+        self._departamento = departamento
+        self._materias_impartidas = [] # Materias a cargo (encapsulación).
+
+    # Obtiene departamento.
+    def obtener_departamento(self):
+        return self._departamento
+
+    # Asigna materia a impartir (encapsulación).
+    def impartir_materia(self, materia):
+        if not isinstance(materia, Materia):
+            print("ERROR: Solo objeto Materia válido.")
+            return
+        if materia not in self._materias_impartidas:
+            self._materias_impartidas.append(materia)
+            materia.asignar_docente(self) # Interacción de objetos.
+            print(f"INFO: Docente {self.obtener_nombre_completo()} ahora imparte {materia.obtener_nombre()}.")
+
+    # Polimorfismo: Personaliza 'mostrar_datos'.
+    def mostrar_datos(self):
+        datos_base = super().mostrar_datos()
+        materias_nombres = [m.obtener_nombre() for m in self._materias_impartidas]
+        materias_str = ", ".join(materias_nombres) if materias_nombres else "Ninguna"
+        return (f"{datos_base}, Tipo: Profesor, Departamento: {self._departamento}, "
+                f"Materias a cargo: [{materias_str}]")
+
+
+# --- Bloque Principal: Demostración ---
+
 if __name__ == "__main__":
-    print("--- INICIO DE LA DEMOSTRACIÓN DE CONSTRUCTORES Y DESTRUCTORES DE SENSORES ---")
-    print("----------------------------------------------------------------------")
+    print("--- DEMO del Sistema Universitario (Ecuador) ---")
 
-    # --- DEMOSTRACIÓN 1: Creación y uso normal de un sensor de Temperatura ---
-    print("\n[DEMOSTRACIÓN 1] Sensor de Temperatura (Destructor implícito al final del programa):")
-    try:
-        temp_sensor_01 = Sensor(id_sensor="T_001", tipo="Temperatura", unidad="°C", valor_inicial=22.8)
-        if temp_sensor_01.activo: # Solo operar si el constructor fue exitoso
-            temp_sensor_01.leer_valor()
-            temp_sensor_01.actualizar_valor(23.5)
-            temp_sensor_01.leer_valor()
-    except ValueError as e:
-        print(f"ERROR: No se pudo crear el sensor de temperatura: {e}")
+    # Creación de objetos.
+    poo = Materia("Programación Orientada a Objetos", "POO101", 4)
+    redes = Materia("Redes de Computadoras", "RED201", 5)
+    calculo = Materia("Cálculo Integral", "CAL301", 5)
 
-    # --- DEMOSTRACIÓN 2: Sensor de Humedad con eliminación explícita ---
-    print("\n\n[DEMOSTRACIÓN 2] Sensor de Humedad (Destructor explícito con 'del'):")
-    try:
-        hum_sensor_01 = Sensor("H_002", "Humedad", "% HR", 65.0)
-        if hum_sensor_01.activo: # Solo operar si el constructor fue exitoso
-            hum_sensor_01.leer_valor()
-            hum_sensor_01.leer_valor()
-            print("\n--> Eliminando explícitamente el objeto 'hum_sensor_01' usando 'del'...")
-            del hum_sensor_01
-            print("--> Objeto 'hum_sensor_01' eliminado. Observa el mensaje del destructor arriba.")
-    except ValueError as e:
-        print(f"ERROR: No se pudo crear el sensor de humedad: {e}")
+    elvio_lapo = Estudiante("Elvio", "Lapo", "1720000001", "Ingeniería en TICS")
+    ing_diego_ramirez = Profesor("Diego", "Ramirez", "0910000002", "Ingeniería en TICS")
 
-    # --- DEMOSTRACIÓN 3: Sensor con error en el constructor (validación) ---
-    print("\n\n[DEMOSTRACIÓN 3] Intentando crear un sensor con ID inválido (manejo de errores):")
-    error_sensor = None # Inicializar a None para evitar NameError si falla la creación
-    try:
-        error_sensor = Sensor(id_sensor="", tipo="Presión", unidad="hPa") # ID vacío
-        if error_sensor.activo: # Si sorprendentemente se crea, intentar usarlo
-            error_sensor.leer_valor()
-    except ValueError as e:
-        print(f"ERROR ESPERADO: No se pudo crear el sensor debido a un error de validación: {e}")
-        # En este punto, 'error_sensor' puede ser un objeto parcial si la excepción se lanzó después
-        # de que algunos atributos fueran definidos. El destructor lo manejará.
+    print("\n--- Interacción y Encapsulación ---")
+    # Docente imparte materias.
+    ing_diego_ramirez.impartir_materia(poo)
+    ing_diego_ramirez.impartir_materia(redes)
 
-    # --- DEMOSTRACIÓN 4: Sensor desactivado manualmente antes de la destrucción ---
-    print("\n\n[DEMOSTRACIÓN 4] Sensor de Luz (desactivado manualmente):")
-    try:
-        light_sensor_01 = Sensor("L_003", "Luz", "Lux", 500.0)
-        if light_sensor_01.activo: # Solo operar si el constructor fue exitoso
-            light_sensor_01.leer_valor()
-            light_sensor_01.desactivar()
-            light_sensor_01.leer_valor() # Intentamos leer un sensor inactivo
-            print("\n--> El programa está a punto de finalizar. El destructor de 'light_sensor_01' se llamará, pero notará que ya estaba inactivo.")
-    except ValueError as e:
-        print(f"ERROR: No se pudo crear el sensor de luz: {e}")
+    # Estudiante matricula y registra notas.
+    elvio_lapo.matricular_materia(poo)
+    elvio_lapo.matricular_materia(redes)
+    elvio_lapo.matricular_materia(calculo)
 
-    print("\n----------------------------------------------------------------------")
-    print("--- FIN DE LA DEMOSTRACIÓN ---")
+    elvio_lapo.registrar_calificacion("POO101", 90)
+    elvio_lapo.registrar_calificacion("POO101", 85)
+    elvio_lapo.registrar_calificacion("RED201", 78)
+    elvio_lapo.registrar_calificacion("CAL301", 65)
+    elvio_lapo.registrar_calificacion("ING001", 99) # Error esperado (materia no matriculada).
+    elvio_lapo.registrar_calificacion("POO101", 105) # Error esperado (calificación fuera de rango).
 
-    time.sleep(0.5)
+    # Accede a promedio.
+    print(f"\nPromedio de {elvio_lapo.obtener_nombre_completo()}: {elvio_lapo.obtener_promedio_general():.2f}")
+
+
+    print("\n--- Herencia y Polimorfismo ---")
+    # Lista de objetos relacionados por herencia.
+    elementos_universitarios = [elvio_lapo, ing_diego_ramirez]
+
+    for elemento in elementos_universitarios:
+        # Polimorfismo: Cada objeto muestra sus datos de forma personalizada.
+        print(elemento.mostrar_datos())
+        print("-" * 60)
+
+    # Polimorfismo extra: Objetos mixtos (incluye Materia).
+    print("\n--- Polimorfismo Adicional ---")
+    todos_los_elementos = [elvio_lapo, ing_diego_ramirez, poo, redes]
+    for elemento in todos_los_elementos:
+        if isinstance(elemento, Persona):
+            print(f"Detalle Persona: {elemento.mostrar_datos()}")
+        elif isinstance(elemento, Materia):
+            print(f"Detalle Materia: {elemento}")
+            if elemento._docente_asignado:
+                print(f"  Docente asignado: {elemento._docente_asignado.obtener_nombre_completo()}")
+        print("=" * 60)
+
+    print("\n--- FIN de la DEMO ---")
